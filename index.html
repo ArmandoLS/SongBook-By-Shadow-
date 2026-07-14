@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cancionero — Editor ChordPro</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iIzE4MTgxYiIvPjxwYXRoIGQ9Ik0xNiA0djkuNTVjLS41OS0uMzQtMS4yNy0uNTUtMi0uNTUtMi4yMSAwLTQgMS43OS00IDRzMS43OSA0IDQgNCA0LTEuNzkgNC00VjhoM1Y0aC01eiIgZmlsbD0iIzAwNGM5OSIvPjwvc3ZnPgo=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
@@ -13,22 +14,42 @@
 
 <style>
   :root{
-    --bg-stage:#17130F;
-    --bg-panel:#1F1A14;
-    --bg-panel-2:#241E17;
+    /* Modo oscuro por defecto — inspirado en la paleta de Twitch */
+    --bg-stage:#0e0e10;
+    --bg-panel:#18181b;
+    --bg-panel-2:#1f1f23;
+    --bg-preview:#0a0a0b;
     --paper:#F7EFDD;
     --paper-line: rgba(43,33,24,0.08);
     --ink:#2B2118;
-    --ink-soft:#7a6a52;
-    --gold:#C79A4B;
-    --gold-soft: rgba(199,154,75,0.18);
-    --rust:#A8432E;
-    --cream-text:#EFE6D4;
-    --border: rgba(199,154,75,0.22);
+    --paper-ink-soft:#7a6a52;
+    --ink-soft:#adadb8;
+    --gold:#004c99;
+    --gold-soft: rgba(0,76,153,0.24);
+    --rust:#f2545b;
+    --cream-text:#efeff1;
+    --border: rgba(0,76,153,0.45);
+    --btn-hover-bg: rgba(0,76,153,0.20);
+    --accent-ink:#ffffff;
     --ok:#6FA46F;
+  }
+  body[data-theme="light"]{
+    --bg-stage:#f4efe4;
+    --bg-panel:#fffaf1;
+    --bg-panel-2:#efe5d2;
+    --bg-preview:#e7e0d1;
+    --ink-soft:#8a7a61;
+    --gold:#b8802f;
+    --gold-soft: rgba(184,128,47,0.16);
+    --rust:#a8432e;
+    --cream-text:#2b2118;
+    --border: rgba(43,33,24,0.16);
+    --btn-hover-bg: rgba(43,33,24,0.06);
+    --accent-ink:#2b1000;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;background:var(--bg-stage);}
+  body{transition:background-color .2s ease;}
   body{
     font-family:'Inter',sans-serif;
     color:var(--cream-text);
@@ -63,6 +84,8 @@
     border-bottom:1px solid var(--border);
   }
   .brand svg{flex:none;}
+  .brand-title{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
+  #btnTheme{margin-left:auto;}
   .tool-group{display:flex;flex-direction:column;gap:8px;}
   .group-label{
     font-size:11px;
@@ -90,7 +113,7 @@
     gap:9px;
     transition:background .15s, border-color .15s;
   }
-  .btn:hover{background:#2c241a;border-color:var(--gold);}
+  .btn:hover{background:var(--btn-hover-bg);border-color:var(--gold);}
   .btn svg{flex:none;opacity:.85;}
   .btn:disabled{opacity:.5;cursor:default;}
   .stepper{
@@ -126,7 +149,7 @@
   }
   .toggle-group button.active{
     background:var(--gold);
-    color:#241C0F;
+    color:var(--accent-ink);
     border-color:var(--gold);
   }
   /* capo neck widget */
@@ -253,7 +276,7 @@
     font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:.05em;padding:10px 12px;border-radius:6px;
   }
   .code-row button{
-    background:var(--gold);color:#241C0F;border:none;font-weight:700;padding:0 14px;border-radius:6px;font-size:13px;
+    background:var(--gold);color:var(--accent-ink);border:none;font-weight:700;padding:0 14px;border-radius:6px;font-size:13px;
   }
   .mini-note{font-size:12px;color:var(--ink-soft);line-height:1.6;margin:0 0 16px;}
   .divider-row{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.07em;}
@@ -288,7 +311,7 @@
     background:var(--bg-panel-2);border:1px solid var(--border);color:var(--cream-text);
     padding:5px 11px;border-radius:6px;font-size:11.5px;font-weight:600;
   }
-  .instrument-tabs button.active{background:var(--gold);color:#241C0F;border-color:var(--gold);}
+  .instrument-tabs button.active{background:var(--gold);color:var(--accent-ink);border-color:var(--gold);}
   .diagrams-strip{
     display:flex;gap:14px;overflow-x:auto;padding:2px 18px 16px;
   }
@@ -349,7 +372,7 @@
     tab-size:2;
     width:100%;
   }
-  .preview-pane{background:#0f0c09;}
+  .preview-pane{background:var(--bg-preview);}
   .info-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
   .badge{
     font-family:'JetBrains Mono',monospace;
@@ -372,7 +395,7 @@
     flex:none;
   }
   .icon-btn:hover{border-color:var(--gold);color:var(--gold);}
-  .icon-btn.active{background:var(--gold);color:#241C0F;border-color:var(--gold);}
+  .icon-btn.active{background:var(--gold);color:var(--accent-ink);border-color:var(--gold);}
   body.focus-mode .app{grid-template-columns:1fr;}
   body.focus-mode .toolbar,
   body.focus-mode .editor-pane,
@@ -413,7 +436,7 @@
   .song-meta{
     font-family:'JetBrains Mono',monospace;
     font-size:11.5px;
-    color:var(--ink-soft);
+    color:var(--paper-ink-soft);
     margin-bottom:22px;
     padding-bottom:14px;
     border-bottom:1px solid var(--paper-line);
@@ -423,7 +446,7 @@
     font-family:'Fraunces',serif;
     font-style:italic;
     font-size:13.5px;
-    color:var(--ink-soft);
+    color:var(--paper-ink-soft);
     margin:12px 0 4px;
   }
   .song-line{
@@ -487,7 +510,7 @@
       flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);
       background:var(--bg-panel-2);color:var(--cream-text);font-size:12.5px;font-weight:600;
     }
-    .mobile-tabs button.active{background:var(--gold);color:#241C0F;}
+    .mobile-tabs button.active{background:var(--gold);color:var(--accent-ink);}
     .editor-pane, .preview-pane{display:none;}
     .editor-pane.show, .preview-pane.show{display:flex;}
     .pane-header{padding:12px 16px 8px;flex-wrap:wrap;}
@@ -532,8 +555,13 @@
 
   <aside class="toolbar">
     <div class="brand">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
-      Cancionero
+      <span class="brand-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+        Cancionero
+      </span>
+      <button class="icon-btn" id="btnTheme" title="Cambiar a modo claro">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" id="themeIcon"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
     </div>
 
     <div class="tool-group">
@@ -545,18 +573,6 @@
       <button class="btn" id="btnExport">⇩ Exportar</button>
       <button class="btn" id="btnPrint">⎙ Imprimir</button>
       <input type="file" id="fileInput" accept=".cho,.crd,.chordpro,.chopro,.txt" hidden>
-    </div>
-
-    <div class="tool-group">
-      <div class="group-label">Sincronización</div>
-      <button class="btn" id="btnSync">🔗 Vincular dispositivo</button>
-      <div class="sync-pill offline" id="syncPill">
-        <span class="sync-dot"></span>
-        <span id="syncPillText">Cargando…</span>
-      </div>
-      <div class="sync-banner" id="syncBanner" style="display:none;">
-        Configura Firebase en el código para sincronizar tus canciones entre tu computadora y tu celular. Mientras tanto se guardan solo en <b>este dispositivo</b>.
-      </div>
     </div>
 
     <div class="tool-group">
@@ -586,6 +602,18 @@
       <div class="toggle-group">
         <button id="sharpBtn" class="active">♯ Sostenidos</button>
         <button id="flatBtn">♭ Bemoles</button>
+      </div>
+    </div>
+
+    <div class="tool-group" style="margin-top:auto;">
+      <div class="group-label">Sincronización</div>
+      <button class="btn" id="btnSync">🔗 Vincular dispositivo</button>
+      <div class="sync-pill offline" id="syncPill">
+        <span class="sync-dot"></span>
+        <span id="syncPillText">Cargando…</span>
+      </div>
+      <div class="sync-banner" id="syncBanner" style="display:none;">
+        Configura Firebase en el código para sincronizar tus canciones entre tu computadora y tu celular. Mientras tanto se guardan solo en <b>este dispositivo</b>.
       </div>
     </div>
   </aside>
@@ -1169,6 +1197,38 @@
     try{ saved = localStorage.getItem(DIAGRAMS_COLLAPSED_KEY) || '0'; }catch(e){}
     setDiagramsCollapsed(saved === '1');
   })();
+
+  // ---------- tema claro / oscuro ----------
+  const THEME_KEY = 'cancionero_theme_v1';
+  const btnTheme = document.getElementById('btnTheme');
+  const themeIcon = document.getElementById('themeIcon');
+  const SUN_ICON = '<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+  const MOON_ICON = '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>';
+
+  function applyTheme(theme){
+    if(theme === 'light'){
+      document.body.setAttribute('data-theme', 'light');
+      themeIcon.innerHTML = MOON_ICON;
+      btnTheme.title = 'Cambiar a modo oscuro';
+    } else {
+      document.body.removeAttribute('data-theme');
+      themeIcon.innerHTML = SUN_ICON;
+      btnTheme.title = 'Cambiar a modo claro';
+    }
+  }
+  function getStoredTheme(){
+    try{ return localStorage.getItem(THEME_KEY); }catch(e){ return null; }
+  }
+  function setStoredTheme(theme){
+    try{ localStorage.setItem(THEME_KEY, theme); }catch(e){}
+  }
+  btnTheme.addEventListener('click', ()=>{
+    const current = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    const next = current === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    setStoredTheme(next);
+  });
+  applyTheme(getStoredTheme() || 'dark');
 
   // ---------- focus mode (dedicated preview) ----------
   const btnFocus = document.getElementById('btnFocus');
