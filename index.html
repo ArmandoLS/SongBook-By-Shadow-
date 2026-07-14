@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cancionero — Editor ChordPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase (usado solo para sincronizar canciones entre dispositivos). Si no se configura, la app funciona igual guardando en este dispositivo. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --bg-stage:#17130F;
+    --bg-panel:#1F1A14;
+    --bg-panel-2:#241E17;
+    --paper:#F7EFDD;
+    --paper-line: rgba(43,33,24,0.08);
+    --ink:#2B2118;
+    --ink-soft:#7a6a52;
+    --gold:#C79A4B;
+    --gold-soft: rgba(199,154,75,0.18);
+    --rust:#A8432E;
+    --cream-text:#EFE6D4;
+    --border: rgba(199,154,75,0.22);
+    --ok:#6FA46F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg-stage);}
+  body{
+    font-family:'Inter',sans-serif;
+    color:var(--cream-text);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    height:100vh;
+    height:100dvh;
+  }
+  /* ---------- TOOLBAR ---------- */
+  .toolbar{
+    background:var(--bg-panel);
+    border-right:1px solid var(--border);
+    padding:20px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+    overflow-y:auto;
+  }
+  .brand{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:20px;
+    letter-spacing:0.02em;
+    color:var(--gold);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding-bottom:6px;
+    border-bottom:1px solid var(--border);
+  }
+  .brand svg{flex:none;}
+  .tool-group{display:flex;flex-direction:column;gap:8px;}
+  .group-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin-bottom:2px;
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+  }
+  .btn{
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    color:var(--cream-text);
+    padding:9px 12px;
+    border-radius:6px;
+    font-size:13.5px;
+    font-weight:500;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    transition:background .15s, border-color .15s;
+  }
+  .btn:hover{background:#2c241a;border-color:var(--gold);}
+  .btn svg{flex:none;opacity:.85;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .stepper{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:4px;
+  }
+  .stepper button{
+    background:none;border:none;color:var(--cream-text);
+    width:30px;height:30px;border-radius:5px;font-size:16px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .stepper button:hover{background:var(--gold-soft);color:var(--gold);}
+  .stepper .val{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;font-weight:600;color:var(--gold);
+    min-width:44px;text-align:center;
+  }
+  .toggle-group{display:flex;gap:6px;}
+  .toggle-group button{
+    flex:1;
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    color:var(--cream-text);
+    padding:8px 6px;
+    border-radius:6px;
+    font-size:12.5px;
+    font-weight:600;
+  }
+  .toggle-group button.active{
+    background:var(--gold);
+    color:#241C0F;
+    border-color:var(--gold);
+  }
+  /* capo neck widget */
+  .neck-wrap{
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 8px 12px;
+  }
+  .neck{
+    position:relative;
+    height:34px;
+    background:linear-gradient(180deg,#3b2c1c,#2a1f13);
+    border-radius:4px;
+    margin:6px 2px 10px;
+    overflow:visible;
+  }
+  .fret{
+    position:absolute;
+    top:0;bottom:0;width:1px;
+    background:rgba(199,154,75,0.35);
+  }
+  .string{
+    position:absolute;left:0;right:0;height:1px;
+    background:rgba(239,230,212,0.25);
+  }
+  .capo-bar{
+    position:absolute;
+    top:-4px;bottom:-4px;
+    width:9px;
+    background:var(--gold);
+    border-radius:4px;
+    box-shadow:0 0 8px rgba(199,154,75,0.7);
+    transition:left .2s ease;
+    transform:translateX(-50%);
+  }
+  .fret-btn{
+    position:absolute;
+    top:0;bottom:0;
+    width:calc(100%/12);
+    background:transparent;
+    border:none;
+  }
+  .neck-labels{
+    display:flex;justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;color:var(--ink-soft);
+    padding:0 2px;
+  }
+  /* ---------- Sync status pill ---------- */
+  .sync-pill{
+    display:flex;align-items:center;gap:7px;
+    font-size:11.5px;color:var(--ink-soft);
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:6px 10px;
+  }
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--ink-soft);flex:none;}
+  .sync-pill.online .sync-dot{background:var(--ok);box-shadow:0 0 6px var(--ok);}
+  .sync-pill.saving .sync-dot{background:var(--gold);box-shadow:0 0 6px var(--gold);}
+  .sync-pill.offline .sync-dot{background:var(--rust);}
+  .sync-banner{
+    font-size:11.5px;line-height:1.5;color:var(--ink-soft);
+    background:var(--bg-panel-2);border:1px solid var(--border);
+    border-radius:6px;padding:8px 10px;
+  }
+  .sync-banner b{color:var(--gold);}
+  /* ---------- MODALS (biblioteca + sincronización) ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(10,8,5,0.72);
+    display:none;align-items:center;justify-content:center;z-index:50;
+    padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    width:100%;max-width:480px;
+    max-height:80vh;
+    display:flex;flex-direction:column;
+    box-shadow:0 30px 70px rgba(0,0,0,0.6);
+  }
+  .modal-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid var(--border);
+  }
+  .modal-head h2{
+    font-family:'Fraunces',serif;font-size:18px;margin:0;color:var(--gold);font-weight:600;
+  }
+  .modal-close{
+    background:none;border:none;color:var(--cream-text);font-size:20px;
+    line-height:1;opacity:.7;
+  }
+  .modal-close:hover{opacity:1;color:var(--gold);}
+  .modal-body{overflow-y:auto;padding:8px 12px;}
+  .modal-body.pad{padding:16px 20px 20px;}
+  .song-row{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:11px 10px;border-radius:7px;
+  }
+  .song-row:hover{background:var(--bg-panel-2);}
+  .song-row-info{min-width:0;}
+  .song-row-title{
+    font-family:'Fraunces',serif;font-weight:600;font-size:14.5px;color:var(--cream-text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .song-row-date{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
+  .song-row-actions{display:flex;gap:6px;flex:none;}
+  .song-row-actions button{
+    background:var(--bg-panel-2);border:1px solid var(--border);color:var(--cream-text);
+    padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;
+  }
+  .song-row-actions button:hover{border-color:var(--gold);color:var(--gold);}
+  .song-row-actions .delete-btn:hover{border-color:var(--rust);color:var(--rust);}
+  .empty-library{
+    padding:30px 16px;text-align:center;color:var(--ink-soft);font-size:13.5px;
+  }
+  .field-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);font-weight:600;margin-bottom:6px;display:block;}
+  .code-row{display:flex;gap:8px;margin-bottom:16px;}
+  .code-row input{
+    flex:1;background:var(--bg-panel-2);border:1px solid var(--border);color:var(--cream-text);
+    font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:.05em;padding:10px 12px;border-radius:6px;
+  }
+  .code-row button{
+    background:var(--gold);color:#241C0F;border:none;font-weight:700;padding:0 14px;border-radius:6px;font-size:13px;
+  }
+  .mini-note{font-size:12px;color:var(--ink-soft);line-height:1.6;margin:0 0 16px;}
+  .divider-row{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.07em;}
+  .divider-row::before, .divider-row::after{content:'';flex:1;height:1px;background:var(--border);}
+  .link-row{display:flex;gap:8px;}
+  .link-row input{
+    flex:1;background:var(--bg-panel-2);border:1px solid var(--border);color:var(--cream-text);
+    font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 12px;border-radius:6px;
+  }
+  .link-row button{
+    background:var(--bg-panel-2);border:1px solid var(--gold);color:var(--gold);font-weight:700;
+    padding:0 14px;border-radius:6px;font-size:13px;
+  }
+  /* ---------- CHORD DIAGRAMS PANEL ---------- */
+  .diagrams-panel{
+    border-top:1px solid var(--border);
+    background:var(--bg-panel);
+    flex:none;
+  }
+  .diagrams-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 18px;
+    gap:10px;
+  }
+  .diagrams-head-left{display:flex;align-items:center;gap:10px;}
+  .diagrams-head span.label{
+    font-size:11px;text-transform:uppercase;letter-spacing:.09em;
+    font-weight:600;color:var(--ink-soft);
+  }
+  .instrument-tabs{display:flex;gap:6px;}
+  .instrument-tabs button{
+    background:var(--bg-panel-2);border:1px solid var(--border);color:var(--cream-text);
+    padding:5px 11px;border-radius:6px;font-size:11.5px;font-weight:600;
+  }
+  .instrument-tabs button.active{background:var(--gold);color:#241C0F;border-color:var(--gold);}
+  .diagrams-strip{
+    display:flex;gap:14px;overflow-x:auto;padding:2px 18px 16px;
+  }
+  .diagrams-panel.collapsed .diagrams-strip,
+  .diagrams-panel.collapsed .instrument-tabs{display:none;}
+  .chord-card{
+    flex:none;
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px 8px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    min-width:74px;
+  }
+  .chord-card-name{
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--gold);
+  }
+  .chord-card-sub{font-size:9px;color:var(--ink-soft);}
+  .diagrams-empty{padding:6px 18px 16px;color:var(--ink-soft);font-size:12.5px;}
+  .chevron{transition:transform .2s ease;}
+  .diagrams-panel.collapsed .chevron{transform:rotate(-90deg);}
+  /* ---------- WORKSPACE ---------- */
+  .workspace{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    height:100vh;
+    height:100dvh;
+    overflow:hidden;
+  }
+  .pane{display:flex;flex-direction:column;min-height:0;}
+  .pane-header{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    font-weight:600;
+    color:var(--ink-soft);
+    padding:14px 22px 10px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .editor-pane{background:var(--bg-stage);}
+  .editor-pane .pane-header{color:var(--gold);}
+  #filenameTag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0;}
+  #editor{
+    flex:1;
+    resize:none;
+    border:none;
+    outline:none;
+    background:var(--bg-stage);
+    color:var(--cream-text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    line-height:1.7;
+    padding:20px 22px 40px;
+    tab-size:2;
+    width:100%;
+  }
+  .preview-pane{background:#0f0c09;}
+  .info-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  .badge{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    background:var(--gold-soft);
+    color:var(--gold);
+    border:1px solid var(--border);
+    padding:2px 7px;
+    border-radius:10px;
+    white-space:nowrap;
+  }
+  .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .icon-btn{
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    color:var(--cream-text);
+    width:27px;height:27px;
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    flex:none;
+  }
+  .icon-btn:hover{border-color:var(--gold);color:var(--gold);}
+  .icon-btn.active{background:var(--gold);color:#241C0F;border-color:var(--gold);}
+  body.focus-mode .app{grid-template-columns:1fr;}
+  body.focus-mode .toolbar,
+  body.focus-mode .editor-pane,
+  body.focus-mode .mobile-tabs{display:none !important;}
+  body.focus-mode .workspace{grid-template-columns:1fr;}
+  body.focus-mode .songsheet{max-width:760px;}
+  .preview-scroll{
+    flex:1;
+    overflow-y:auto;
+    padding:34px 30px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .songsheet{
+    background:var(--paper);
+    color:var(--ink);
+    max-width:640px;
+    margin:0 auto;
+    padding:44px 46px 60px;
+    border-radius:3px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.05);
+    min-height:400px;
+  }
+  .song-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:30px;
+    margin:0 0 2px;
+    color:var(--ink);
+  }
+  .song-subtitle{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:16px;
+    color:var(--rust);
+    margin:0 0 18px;
+  }
+  .song-meta{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-bottom:22px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--paper-line);
+    display:flex;gap:14px;flex-wrap:wrap;
+  }
+  .song-comment{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin:12px 0 4px;
+  }
+  .song-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    line-height:2.5;
+    white-space:pre-wrap;
+  }
+  .song-line.empty{height:14px;line-height:14px;}
+  .pair{
+    position:relative;
+    display:inline-block;
+    padding-top:1.15em;
+    vertical-align:bottom;
+  }
+  .pair .chord{
+    position:absolute;
+    top:0;left:0;
+    color:var(--rust);
+    font-weight:700;
+    font-size:13px;
+    white-space:nowrap;
+  }
+  .block-chorus{
+    border-left:3px solid var(--gold);
+    padding:6px 0 6px 16px;
+    margin:8px 0;
+    background:rgba(199,154,75,0.06);
+  }
+  .block-bridge{
+    border-left:3px solid var(--rust);
+    padding:6px 0 6px 16px;
+    margin:8px 0;
+  }
+  .spacer{height:14px;}
+  /* mobile */
+  .mobile-tabs{display:none;}
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr;}
+    .toolbar{
+      flex-direction:row;
+      align-items:center;
+      overflow-x:auto;
+      overflow-y:hidden;
+      padding:10px 12px;
+      gap:14px;
+      border-right:none;
+      border-bottom:1px solid var(--border);
+      -webkit-overflow-scrolling:touch;
+    }
+    .brand{border:none;padding:0;}
+    .tool-group{flex-direction:row;flex:none;}
+    .toolbar .group-label{display:none;}
+    .neck-wrap{display:none;}
+    .sync-banner{display:none;}
+    .workspace{grid-template-columns:1fr;grid-auto-rows:1fr;}
+    .mobile-tabs{
+      display:flex;gap:8px;padding:10px 16px 0;background:var(--bg-stage);
+    }
+    .mobile-tabs button{
+      flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);
+      background:var(--bg-panel-2);color:var(--cream-text);font-size:12.5px;font-weight:600;
+    }
+    .mobile-tabs button.active{background:var(--gold);color:#241C0F;}
+    .editor-pane, .preview-pane{display:none;}
+    .editor-pane.show, .preview-pane.show{display:flex;}
+    .pane-header{padding:12px 16px 8px;flex-wrap:wrap;}
+    .preview-scroll{padding:18px 14px 30px;}
+    .songsheet{padding:26px 20px 40px;}
+  }
+  @media (max-width:520px){
+    .song-title{font-size:24px;}
+    .song-line{font-size:13.5px;line-height:2.3;}
+    .pair .chord{font-size:11.5px;}
+    .songsheet{padding:20px 16px 34px;}
+    .diagrams-head{flex-wrap:wrap;}
+    .instrument-tabs button{padding:5px 8px;font-size:11px;}
+    .chord-card{min-width:64px;padding:8px 9px 7px;}
+    .badge{font-size:9.5px;}
+    .brand{font-size:17px;}
+    .modal-box{max-width:100%;}
+  }
+  @supports (padding: max(0px)){
+    .toolbar{padding-left:max(16px, env(safe-area-inset-left));}
+    .mobile-tabs{padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right));}
+  }
+  /* ---------- PRINT ---------- */
+  @media print{
+    body,.app,.workspace{background:#fff !important;height:auto;}
+    .toolbar,.editor-pane,.pane-header,.mobile-tabs{display:none !important;}
+    .preview-pane{display:block !important;background:#fff;}
+    .preview-scroll{padding:0;overflow:visible;}
+    .songsheet{
+      box-shadow:none;background:#fff;max-width:100%;
+      margin:0;padding:0;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    }
+  }
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="toolbar">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+      Cancionero
+    </div>
+
+    <div class="tool-group">
+      <div class="group-label">Archivo</div>
+      <button class="btn" id="btnNew">✚ Nuevo</button>
+      <button class="btn" id="btnSave"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 3h12a1 1 0 0 1 1 1v16l-7-4-7 4V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Guardar</button>
+      <button class="btn" id="btnLibrary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 6.5c-1.6-1.3-4.2-2-7-2v13.5c2.8 0 5.4.7 7 2 1.6-1.3 4.2-2 7-2V4.5c-2.8 0-5.4.7-7 2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6.5v13.5" stroke="currentColor" stroke-width="1.6"/></svg> Mis canciones</button>
+      <button class="btn" id="btnImport">⇪ Importar</button>
+      <button class="btn" id="btnExport">⇩ Exportar</button>
+      <button class="btn" id="btnPrint">⎙ Imprimir</button>
+      <input type="file" id="fileInput" accept=".cho,.crd,.chordpro,.chopro,.txt" hidden>
+    </div>
+
+    <div class="tool-group">
+      <div class="group-label">Sincronización</div>
+      <button class="btn" id="btnSync">🔗 Vincular dispositivo</button>
+      <div class="sync-pill offline" id="syncPill">
+        <span class="sync-dot"></span>
+        <span id="syncPillText">Cargando…</span>
+      </div>
+      <div class="sync-banner" id="syncBanner" style="display:none;">
+        Configura Firebase en el código para sincronizar tus canciones entre tu computadora y tu celular. Mientras tanto se guardan solo en <b>este dispositivo</b>.
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <div class="group-label">Transporte</div>
+      <div class="stepper">
+        <button id="transDown">−</button>
+        <span class="val" id="transVal">0</span>
+        <button id="transUp">+</button>
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <div class="group-label">Capotraste</div>
+      <div class="neck-wrap">
+        <div class="neck" id="neck"></div>
+        <div class="neck-labels" id="neckLabels"></div>
+      </div>
+      <div class="stepper">
+        <button id="capoDown">−</button>
+        <span class="val" id="capoVal">0</span>
+        <button id="capoUp">+</button>
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <div class="group-label">Alteraciones</div>
+      <div class="toggle-group">
+        <button id="sharpBtn" class="active">♯ Sostenidos</button>
+        <button id="flatBtn">♭ Bemoles</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="mobile-tabs">
+    <button id="tabEditor" class="active">Editor</button>
+    <button id="tabPreview">Vista previa</button>
+  </div>
+
+  <main class="workspace">
+    <section class="pane editor-pane show">
+      <div class="pane-header">
+        <span>Editor ChordPro</span>
+        <span id="filenameTag">cancion.cho</span>
+      </div>
+      <textarea id="editor" spellcheck="false"></textarea>
+    </section>
+
+    <section class="pane preview-pane">
+      <div class="pane-header">
+        <span>Vista previa</span>
+        <div class="header-right">
+          <div class="info-badges" id="infoBadges"></div>
+          <button class="icon-btn" id="btnFocus" title="Vista dedicada">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="preview-scroll">
+        <div class="songsheet" id="preview"></div>
+      </div>
+      <div class="diagrams-panel" id="diagramsPanel">
+        <div class="diagrams-head">
+          <div class="diagrams-head-left">
+            <button class="icon-btn" id="btnToggleDiagrams" title="Mostrar u ocultar acordes">
+              <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="label">Diagramas de acordes</span>
+          </div>
+          <div class="instrument-tabs">
+            <button id="instGuitar" class="active">Guitarra</button>
+            <button id="instUke">Ukelele</button>
+            <button id="instPiano">Piano</button>
+          </div>
+        </div>
+        <div class="diagrams-strip" id="diagramsStrip"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="libraryOverlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Mis canciones</h2>
+      <button class="modal-close" id="libraryClose">✕</button>
+    </div>
+    <div class="modal-body" id="libraryBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="syncOverlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Vincular dispositivo</h2>
+      <button class="modal-close" id="syncClose">✕</button>
+    </div>
+    <div class="modal-body pad">
+      <span class="field-label">Código de tu biblioteca</span>
+      <div class="code-row">
+        <input type="text" id="libraryCodeDisplay" readonly>
+        <button id="copyCodeBtn">Copiar</button>
+      </div>
+      <p class="mini-note" id="syncExplain">
+        Este código identifica tu biblioteca de canciones en la nube. Ingresa el <b>mismo código</b> en tu computadora y en tu celular para ver las mismas canciones en ambos.
+      </p>
+
+      <div class="divider-row">Vincular con otro código</div>
+      <div class="link-row">
+        <input type="text" id="linkCodeInput" placeholder="Pega aquí un código existente…">
+        <button id="linkCodeBtn">Vincular</button>
+      </div>
+      <p class="mini-note">Escribe el código que ya viste en tu otro dispositivo y presiona «Vincular» para compartir la misma biblioteca aquí.</p>
+
+      <div class="divider-row">Otra opción</div>
+      <button class="btn" id="newCodeBtn" style="width:100%;justify-content:center;">🔄 Generar un código nuevo (biblioteca vacía)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+  const NOTE_INDEX = {
+    'C':0,'B#':0,
+    'C#':1,'Db':1,
+    'D':2,
+    'D#':3,'Eb':3,
+    'E':4,'Fb':4,
+    'E#':5,'F':5,
+    'F#':6,'Gb':6,
+    'G':7,
+    'G#':8,'Ab':8,
+    'A':9,
+    'A#':10,'Bb':10,
+    'B':11,'Cb':11
+  };
+
+  const state = { transpose:0, capo:0, useFlats:false, filename:'cancion.cho', currentId:null, instrument:'guitar' };
+  const LIB_KEY = 'cancionero_songs_v1';
+  const LIBRARY_ID_KEY = 'cancionero_library_id_v1';
+
+  const DEFAULT_SONG =
+`{title: Título de la canción}
+{subtitle: Artista}
+{key: C}
+
+{start_of_verse}
+[C]Escribe tu letra [G]aquí, con a[Am]cordes entre cor[F]chetes
+[C]Cada línea puede llevar [G]varios [Am]acordes [F]así
+{end_of_verse}
+
+{start_of_chorus}
+[F]Este es el [C]coro de la [G]canción
+[F]Se resalta un [C]poco del [G]resto
+{end_of_chorus}
+
+{comment: Segunda estrofa}
+[C]Sigue escribiendo tu [G]canción [Am]aquí [F]abajo
+`;
+
+  const editor = document.getElementById('editor');
+  const preview = document.getElementById('preview');
+  const filenameTag = document.getElementById('filenameTag');
+  const infoBadges = document.getElementById('infoBadges');
+  const fileInput = document.getElementById('fileInput');
+
+  function noteIndex(note){ return NOTE_INDEX[note]; }
+  function noteName(idx, flats){
+    idx = ((idx % 12) + 12) % 12;
+    return flats ? FLAT[idx] : SHARP[idx];
+  }
+
+  const CHORD_RE = /^([A-G])(#{1,2}|b{1,2})?([^\/\s]*)(?:\/([A-G])(#{1,2}|b{1,2})?)?$/;
+
+  function transposeChord(chord, semitones, useFlats){
+    const m = chord.match(CHORD_RE);
+    if(!m) return chord;
+    const rootNote = m[1] + (m[2]||'');
+    const rootIdx = noteIndex(rootNote);
+    if(rootIdx === undefined) return chord;
+    const quality = m[3]||'';
+    let out = noteName(rootIdx + semitones, useFlats) + quality;
+    if(m[4]){
+      const bassNote = m[4] + (m[5]||'');
+      const bassIdx = noteIndex(bassNote);
+      out += '/' + (bassIdx===undefined ? bassNote : noteName(bassIdx + semitones, useFlats));
+    }
+    return out;
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ---------- chord quality detection (shared by diagrams) ----------
+  function detectQuality(qualityStr){
+    const q = (qualityStr||'').toLowerCase();
+    if(!q) return 'major';
+    if(q.includes('maj7')) return 'maj7';
+    if(q.includes('m7b5') || q.includes('m7-5') || q.includes('ø')) return 'm7b5';
+    if(q.includes('dim7')) return 'dim7';
+    if(q.includes('dim')) return 'dim';
+    if(q.includes('aug') || q.includes('+')) return 'aug';
+    if(q.includes('sus2')) return 'sus2';
+    if(q.includes('sus4') || q === 'sus') return 'sus4';
+    const isMinor = /^m(?!aj)/.test(q);
+    if(isMinor){
+      if(q.includes('6')) return 'm6';
+      if(q.includes('7') || q.includes('9')) return 'min7';
+      return 'minor';
+    }
+    if(q.includes('6')) return '6';
+    if(q.includes('7') || q.includes('9')) return '7';
+    return 'major';
+  }
+
+  const PIANO_INTERVALS = {
+    major:[0,4,7], minor:[0,3,7], 7:[0,4,7,10], maj7:[0,4,7,11],
+    min7:[0,3,7,10], m7b5:[0,3,6,10], dim7:[0,3,6,9], dim:[0,3,6],
+    aug:[0,4,8], sus2:[0,2,7], sus4:[0,5,7], 6:[0,4,7,9], m6:[0,3,7,9]
+  };
+
+  // ---------- guitar moveable shapes ----------
+  const GUITAR_E_SHAPES = {
+    major:[0,2,2,1,0,0], minor:[0,2,2,0,0,0], 7:[0,2,0,1,0,0], min7:[0,2,0,0,0,0],
+    maj7:[0,2,1,1,0,0], sus4:[0,2,2,2,0,0], sus2:[0,2,4,'x',0,0],
+    dim:[0,1,2,0,'x','x'], dim7:[0,1,2,0,'x','x'], m7b5:[0,1,2,0,'x','x'],
+    aug:[0,3,2,1,'x','x'], 6:[0,2,2,1,2,0], m6:[0,2,1,0,2,0]
+  };
+  const GUITAR_A_SHAPES = {
+    major:['x',0,2,2,2,0], minor:['x',0,2,2,1,0], 7:['x',0,2,0,2,0], min7:['x',0,2,0,1,0],
+    maj7:['x',0,2,1,2,0], sus4:['x',0,2,2,3,0], sus2:['x',0,2,2,0,0],
+    dim:['x',0,1,2,1,'x'], dim7:['x',0,1,2,1,'x'], m7b5:['x',0,1,2,1,'x'],
+    aug:['x',0,3,2,2,'x'], 6:['x',0,2,2,2,2], m6:['x',0,2,2,1,2]
+  };
+  function buildGuitarShape(rootIdx, category){
+    const distE = (rootIdx - 4 + 12) % 12;
+    const distA = (rootIdx - 9 + 12) % 12;
+    const useE = distE <= distA;
+    const base = useE ? distE : distA;
+    const tmpl = useE ? GUITAR_E_SHAPES[category] : GUITAR_A_SHAPES[category];
+    const frets = tmpl.map(v => v==='x' ? 'x' : v + base);
+    return { frets, base };
+  }
+
+  function buildUkeShape(rootIdx, category){
+    const nFromC = rootIdx;
+    const nFromA = (rootIdx - 9 + 12) % 12;
+    switch(category){
+      case 'major': case 'sus2': case 'sus4': case '6': case 'aug':
+        return [nFromC, nFromC, nFromC, nFromC + 3];
+      case '7':
+        return [nFromC, nFromC, nFromC, nFromC + 1];
+      case 'maj7':
+        return [nFromC, nFromC, nFromC, nFromC + 2];
+      case 'minor': case 'dim': case 'dim7': case 'm7b5': case 'm6':
+        return [nFromA + 2, nFromA, nFromA, nFromA];
+      case 'min7':
+        return [nFromA, nFromA, nFromA, nFromA];
+      default:
+        return [nFromC, nFromC, nFromC, nFromC + 3];
+    }
+  }
+
+  function svgGuitarDiagram(rootIdx, category){
+    const { frets, base } = buildGuitarShape(rootIdx, category);
+    const W = 100, H = 118, left = 14, right = 90, top = 30, bottom = 104;
+    const nStrings = 6, nFrets = 4;
+    const stepX = (right-left)/(nStrings-1);
+    const stepY = (bottom-top)/nFrets;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="72" height="85">`;
+    if(base === 0){
+      s += `<rect x="${left-1}" y="${top-2}" width="${right-left+2}" height="3" fill="var(--cream-text)"/>`;
+    } else {
+      s += `<text x="${left-11}" y="${top+8}" font-size="8" fill="var(--gold)" font-family="JetBrains Mono, monospace">${base}fr</text>`;
+    }
+    for(let i=0;i<=nFrets;i++){
+      const y = top + i*stepY;
+      s += `<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="rgba(239,230,212,0.35)" stroke-width="1"/>`;
+    }
+    for(let i=0;i<nStrings;i++){
+      const x = left + i*stepX;
+      s += `<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="rgba(239,230,212,0.35)" stroke-width="1"/>`;
+    }
+    frets.forEach((f, i) => {
+      const x = left + i*stepX;
+      if(f === 'x'){
+        s += `<text x="${x}" y="${top-6}" font-size="9" fill="var(--rust)" text-anchor="middle" font-weight="700">×</text>`;
+      } else if(f === 0){
+        s += `<circle cx="${x}" cy="${top-8}" r="3" fill="none" stroke="var(--cream-text)" stroke-width="1.3"/>`;
+      } else {
+        const relFret = base === 0 ? f : (f - base + 1);
+        const y = top + (relFret-0.5)*stepY;
+        s += `<circle cx="${x}" cy="${y}" r="5" fill="var(--gold)"/>`;
+      }
+    });
+    s += `</svg>`;
+    return s;
+  }
+
+  function svgUkeDiagram(rootIdx, category){
+    const raw = buildUkeShape(rootIdx, category);
+    const minVal = Math.min(...raw);
+    const startFret = minVal === 0 ? 0 : minVal;
+    const W = 90, H = 110, left = 16, right = 74, top = 28, bottom = 98;
+    const nStrings = 4, nFrets = 4;
+    const stepX = (right-left)/(nStrings-1);
+    const stepY = (bottom-top)/nFrets;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="64" height="80">`;
+    if(startFret === 0){
+      s += `<rect x="${left-1}" y="${top-2}" width="${right-left+2}" height="3" fill="var(--cream-text)"/>`;
+    } else {
+      s += `<text x="${left-12}" y="${top+8}" font-size="8" fill="var(--gold)" font-family="JetBrains Mono, monospace">${startFret}fr</text>`;
+    }
+    for(let i=0;i<=nFrets;i++){
+      const y = top + i*stepY;
+      s += `<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="rgba(239,230,212,0.35)" stroke-width="1"/>`;
+    }
+    for(let i=0;i<nStrings;i++){
+      const x = left + i*stepX;
+      s += `<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="rgba(239,230,212,0.35)" stroke-width="1"/>`;
+    }
+    raw.forEach((f, i) => {
+      const x = left + i*stepX;
+      if(f === 0){
+        s += `<circle cx="${x}" cy="${top-8}" r="3" fill="none" stroke="var(--cream-text)" stroke-width="1.3"/>`;
+      } else {
+        const relFret = startFret === 0 ? f : (f - startFret + 1);
+        const y = top + (relFret-0.5)*stepY;
+        s += `<circle cx="${x}" cy="${y}" r="5" fill="var(--gold)"/>`;
+      }
+    });
+    s += `</svg>`;
+    return s;
+  }
+
+  function svgPianoDiagram(rootIdx, category){
+    const intervals = PIANO_INTERVALS[category] || PIANO_INTERVALS.major;
+    const chordTones = new Set(intervals.map(iv => (rootIdx+iv)%12));
+    const whitePc = [0,2,4,5,7,9,11];
+    const blackPc = [1,3,6,8,10];
+    const W = 126, H = 84;
+    const whiteW = W/7, whiteH = 76;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="98" height="66">`;
+    whitePc.forEach((pc, i) => {
+      const x = i*whiteW;
+      const hit = chordTones.has(pc);
+      const isRoot = pc === rootIdx;
+      const fill = isRoot ? 'var(--rust)' : (hit ? 'var(--gold)' : '#F7EFDD');
+      s += `<rect x="${x}" y="0" width="${whiteW-1}" height="${whiteH}" fill="${fill}" stroke="#2B2118" stroke-width="1"/>`;
+    });
+    const blackOffsets = [0.62,1.62,3.55,4.55,5.55];
+    blackPc.forEach((pc, i) => {
+      const x = blackOffsets[i]*whiteW - (whiteW*0.28);
+      const hit = chordTones.has(pc);
+      const isRoot = pc === rootIdx;
+      const fill = isRoot ? 'var(--rust)' : (hit ? 'var(--gold)' : '#241C0F');
+      s += `<rect x="${x}" y="0" width="${whiteW*0.56}" height="${whiteH*0.62}" fill="${fill}" stroke="#000" stroke-width="0.6"/>`;
+    });
+    s += `</svg>`;
+    return s;
+  }
+
+  function buildChordDiagram(chordDisplay, instrument){
+    const m = chordDisplay.match(CHORD_RE);
+    if(!m) return `<div class="chord-card-sub">n/d</div>`;
+    const rootNote = m[1] + (m[2]||'');
+    const rootIdx = noteIndex(rootNote);
+    if(rootIdx === undefined) return `<div class="chord-card-sub">n/d</div>`;
+    const category = detectQuality(m[3]||'');
+    if(instrument === 'guitar') return svgGuitarDiagram(rootIdx, category);
+    if(instrument === 'uke') return svgUkeDiagram(rootIdx, category);
+    return svgPianoDiagram(rootIdx, category);
+  }
+
+  function renderChordDiagrams(chordList){
+    const strip = document.getElementById('diagramsStrip');
+    if(!strip) return;
+    if(!chordList.length){
+      strip.innerHTML = '<div class="diagrams-empty">Agrega acordes entre corchetes, como [C] o [Am7], para ver sus diagramas aquí.</div>';
+      return;
+    }
+    let html = '';
+    chordList.forEach(chord => {
+      html += `<div class="chord-card">
+        <div class="chord-card-name">${escapeHtml(chord)}</div>
+        ${buildChordDiagram(chord, state.instrument)}
+      </div>`;
+    });
+    strip.innerHTML = html;
+  }
+
+  function parseChordLine(line, semitones, useFlats, collector){
+    const re = /\[([^\]]+)\]/g;
+    const matches = [...line.matchAll(re)];
+    let html = '';
+    if(matches.length === 0){
+      return escapeHtml(line) || '&nbsp;';
+    }
+    if(matches[0].index > 0){
+      html += escapeHtml(line.slice(0, matches[0].index));
+    }
+    for(let i=0;i<matches.length;i++){
+      const chord = matches[i][1];
+      const start = matches[i].index + matches[i][0].length;
+      const end = i+1 < matches.length ? matches[i+1].index : line.length;
+      let text = line.slice(start, end);
+      const displayChord = transposeChord(chord, semitones, useFlats);
+      if(collector && !collector.includes(displayChord)) collector.push(displayChord);
+      const safeText = escapeHtml(text) || '&nbsp;';
+      html += `<span class="pair"><span class="chord">${escapeHtml(displayChord)}</span>${safeText}</span>`;
+    }
+    return html;
+  }
+
+  const DIRECTIVE_RE = /^\{\s*([a-zA-Z_#]+)\s*(?::\s*(.*?)\s*)?\}\s*$/;
+  const ALIAS = {
+    t:'title', title:'title',
+    st:'subtitle', subtitle:'subtitle',
+    c:'comment', comment:'comment',
+    ci:'comment', comment_italic:'comment',
+    soc:'start_of_chorus', start_of_chorus:'start_of_chorus',
+    eoc:'end_of_chorus', end_of_chorus:'end_of_chorus',
+    sov:'start_of_verse', start_of_verse:'start_of_verse',
+    eov:'end_of_verse', end_of_verse:'end_of_verse',
+    sob:'start_of_bridge', start_of_bridge:'start_of_bridge',
+    eob:'end_of_bridge', end_of_bridge:'end_of_bridge',
+    key:'key', capo:'capo'
+  };
+
+  function render(){
+    const text = editor.value;
+    const lines = text.split('\n');
+    const semitones = state.transpose - state.capo;
+
+    let out = '';
+    let songKey = null;
+    let blockStack = [];
+    const chordsSeen = [];
+
+    function openBlocks(){ return blockStack.map(b => `class="block-${b}"`).join(' '); }
+
+    for(let raw of lines){
+      const line = raw;
+      const trimmed = line.trim();
+
+      if(trimmed === ''){
+        out += `<div class="spacer"></div>`;
+        continue;
+      }
+
+      const dMatch = trimmed.match(DIRECTIVE_RE);
+      if(dMatch){
+        const key = ALIAS[dMatch[1].toLowerCase()];
+        const value = dMatch[2] || '';
+        if(key === 'title'){
+          out += `<h1 class="song-title">${escapeHtml(value)}</h1>`;
+        } else if(key === 'subtitle'){
+          out += `<div class="song-subtitle">${escapeHtml(value)}</div>`;
+        } else if(key === 'comment'){
+          out += `<div class="song-comment">${escapeHtml(value)}</div>`;
+        } else if(key === 'key'){
+          songKey = value;
+        } else if(key === 'capo'){
+          // informativo únicamente
+        } else if(key === 'start_of_chorus'){
+          blockStack.push('chorus');
+          out += `<div ${openBlocks()}>`;
+        } else if(key === 'end_of_chorus'){
+          out += `</div>`;
+          blockStack.pop();
+        } else if(key === 'start_of_bridge'){
+          blockStack.push('bridge');
+          out += `<div ${openBlocks()}>`;
+        } else if(key === 'end_of_bridge'){
+          out += `</div>`;
+          blockStack.pop();
+        } else if(key === 'start_of_verse' || key === 'end_of_verse'){
+          // estructural, sin envoltorio propio
+        }
+        continue;
+      }
+
+      const html = parseChordLine(line, semitones, state.useFlats, chordsSeen);
+      out += `<div class="song-line">${html}</div>`;
+    }
+
+    preview.innerHTML = out || '<div class="song-comment">Tu canción aparecerá aquí…</div>';
+    renderChordDiagrams(chordsSeen);
+
+    let badges = `<span class="badge">Transporte ${state.transpose>0?'+':''}${state.transpose}</span>`;
+    badges += `<span class="badge">Capo ${state.capo}</span>`;
+    if(songKey){
+      const soundingKey = transposeChord(songKey, state.transpose, state.useFlats);
+      badges += `<span class="badge">Tono real ${escapeHtml(soundingKey)}</span>`;
+      if(state.capo>0){
+        const shapeKey = transposeChord(songKey, semitones, state.useFlats);
+        badges += `<span class="badge">Toca en ${escapeHtml(shapeKey)}</span>`;
+      }
+    }
+    infoBadges.innerHTML = badges;
+  }
+
+  // ---------- neck widget ----------
+  const neck = document.getElementById('neck');
+  const neckLabels = document.getElementById('neckLabels');
+  const NUM_FRETS = 11;
+
+  function buildNeck(){
+    neck.innerHTML = '';
+    for(let i=1;i<NUM_FRETS;i++){
+      const f = document.createElement('div');
+      f.className = 'fret';
+      f.style.left = (i/NUM_FRETS*100)+'%';
+      neck.appendChild(f);
+    }
+    for(let s=0;s<4;s++){
+      const st = document.createElement('div');
+      st.className = 'string';
+      st.style.top = (6 + s*7)+'px';
+      neck.appendChild(st);
+    }
+    for(let i=0;i<=NUM_FRETS;i++){
+      const b = document.createElement('button');
+      b.className = 'fret-btn';
+      b.style.left = (i/(NUM_FRETS+1)*100)+'%';
+      b.title = 'Capo traste ' + i;
+      b.addEventListener('click', ()=> setCapo(i));
+      neck.appendChild(b);
+    }
+    const bar = document.createElement('div');
+    bar.className = 'capo-bar';
+    bar.id = 'capoBar';
+    neck.appendChild(bar);
+
+    neckLabels.innerHTML = '';
+    for(let i=0;i<=NUM_FRETS;i+=1){
+      const s = document.createElement('span');
+      s.textContent = i;
+      neckLabels.appendChild(s);
+    }
+    positionCapoBar();
+  }
+
+  function positionCapoBar(){
+    const bar = document.getElementById('capoBar');
+    if(!bar) return;
+    const pct = (state.capo/(NUM_FRETS+1))*100;
+    bar.style.left = pct + '%';
+  }
+
+  function setCapo(v){
+    state.capo = Math.max(0, Math.min(11, v));
+    document.getElementById('capoVal').textContent = state.capo;
+    positionCapoBar();
+    render();
+  }
+  function setTranspose(v){
+    state.transpose = Math.max(-11, Math.min(11, v));
+    document.getElementById('transVal').textContent = (state.transpose>0?'+':'') + state.transpose;
+    render();
+  }
+
+  document.getElementById('capoUp').addEventListener('click', ()=> setCapo(state.capo+1));
+  document.getElementById('capoDown').addEventListener('click', ()=> setCapo(state.capo-1));
+  document.getElementById('transUp').addEventListener('click', ()=> setTranspose(state.transpose+1));
+  document.getElementById('transDown').addEventListener('click', ()=> setTranspose(state.transpose-1));
+
+  const sharpBtn = document.getElementById('sharpBtn');
+  const flatBtn = document.getElementById('flatBtn');
+  sharpBtn.addEventListener('click', ()=>{
+    state.useFlats = false;
+    sharpBtn.classList.add('active'); flatBtn.classList.remove('active');
+    render();
+  });
+  flatBtn.addEventListener('click', ()=>{
+    state.useFlats = true;
+    flatBtn.classList.add('active'); sharpBtn.classList.remove('active');
+    render();
+  });
+
+  // ---------- instrument tabs ----------
+  const instGuitar = document.getElementById('instGuitar');
+  const instUke = document.getElementById('instUke');
+  const instPiano = document.getElementById('instPiano');
+  function setInstrument(name, btn){
+    state.instrument = name;
+    [instGuitar, instUke, instPiano].forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+  instGuitar.addEventListener('click', ()=> setInstrument('guitar', instGuitar));
+  instUke.addEventListener('click', ()=> setInstrument('uke', instUke));
+  instPiano.addEventListener('click', ()=> setInstrument('piano', instPiano));
+
+  // ---------- toggle chord diagrams panel ----------
+  const diagramsPanel = document.getElementById('diagramsPanel');
+  const btnToggleDiagrams = document.getElementById('btnToggleDiagrams');
+  const DIAGRAMS_COLLAPSED_KEY = 'cancionero_diagrams_collapsed_v1';
+  function setDiagramsCollapsed(collapsed){
+    diagramsPanel.classList.toggle('collapsed', collapsed);
+    try{ localStorage.setItem(DIAGRAMS_COLLAPSED_KEY, collapsed ? '1' : '0'); }catch(e){}
+  }
+  btnToggleDiagrams.addEventListener('click', ()=>{
+    setDiagramsCollapsed(!diagramsPanel.classList.contains('collapsed'));
+  });
+  (function initDiagramsCollapsed(){
+    let saved = '0';
+    try{ saved = localStorage.getItem(DIAGRAMS_COLLAPSED_KEY) || '0'; }catch(e){}
+    setDiagramsCollapsed(saved === '1');
+  })();
+
+  // ---------- focus mode (dedicated preview) ----------
+  const btnFocus = document.getElementById('btnFocus');
+  const EXPAND_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const COLLAPSE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 9h4a2 2 0 0 0 2-2V3M21 9h-4a2 2 0 0 1-2-2V3M3 15h4a2 2 0 0 1 2 2v4M21 15h-4a2 2 0 0 0-2 2v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  btnFocus.addEventListener('click', ()=>{
+    const on = document.body.classList.toggle('focus-mode');
+    btnFocus.classList.toggle('active', on);
+    btnFocus.innerHTML = on ? COLLAPSE_ICON : EXPAND_ICON;
+    btnFocus.title = on ? 'Salir de la vista dedicada' : 'Vista dedicada';
+  });
+
+  // =========================================================================
+  // SINCRONIZACIÓN EN LA NUBE (Firebase) — con respaldo automático en local
+  // =========================================================================
+  //
+  // Para activar la sincronización entre tu computadora y tu celular:
+  // 1. Crea un proyecto gratuito en https://console.firebase.google.com
+  // 2. Activa "Firestore Database" (modo producción) en ese proyecto.
+  // 3. En "Configuración del proyecto" > "Tus apps", crea una app web y copia
+  //    el objeto de configuración aquí abajo, reemplazando los valores TU_*.
+  // 4. En Firestore, pestaña "Reglas", pega esto y publica:
+  //      rules_version = '2';
+  //      service cloud.firestore {
+  //        match /databases/{database}/documents {
+  //          match /libraries/{libraryId}/songs/{songId} {
+  //            allow read, write: if true;
+  //          }
+  //        }
+  //      }
+  //    (El "código de biblioteca" funciona como una contraseña simple: cualquiera
+  //    que lo conozca puede leer/escribir esa biblioteca. No lo compartas ni lo
+  //    subas a un repositorio público junto con canciones sensibles.)
+  // 5. Sube este archivo a GitHub Pages tal cual, con tus datos ya pegados.
+  //
+  // Si dejas los valores TU_* sin cambiar, la app sigue funcionando normalmente,
+  // pero guardando las canciones solo en el dispositivo donde las creaste.
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_PROYECTO.firebaseapp.com",
+    projectId: "TU_PROYECTO",
+    storageBucket: "TU_PROYECTO.appspot.com",
+    messagingSenderId: "TU_SENDER_ID",
+    appId: "TU_APP_ID"
+  };
+
+  let cloudEnabled = false;
+  let db = null;
+
+  function firebaseConfigured(){
+    return firebaseConfig.apiKey && firebaseConfig.apiKey !== 'TU_API_KEY' && firebaseConfig.projectId !== 'TU_PROYECTO';
+  }
+
+  try{
+    if(firebaseConfigured() && window.firebase){
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      cloudEnabled = true;
+    }
+  }catch(e){
+    console.error('No se pudo inicializar Firebase, usando almacenamiento local.', e);
+    cloudEnabled = false;
+  }
+
+  const syncPill = document.getElementById('syncPill');
+  const syncPillText = document.getElementById('syncPillText');
+  const syncBanner = document.getElementById('syncBanner');
+
+  function setSyncStatus(mode, text){
+    syncPill.classList.remove('online','saving','offline');
+    syncPill.classList.add(mode);
+    syncPillText.textContent = text;
+  }
+
+  function genCode(){
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let out = '';
+    for(let i=0;i<3;i++){
+      for(let j=0;j<3;j++) out += chars[Math.floor(Math.random()*chars.length)];
+      if(i<2) out += '-';
+    }
+    return out;
+  }
+
+  function getLibraryId(){
+    let id = null;
+    try{ id = localStorage.getItem(LIBRARY_ID_KEY); }catch(e){}
+    if(!id){
+      id = genCode();
+      try{ localStorage.setItem(LIBRARY_ID_KEY, id); }catch(e){}
+    }
+    return id;
+  }
+  function setLibraryId(id){
+    try{ localStorage.setItem(LIBRARY_ID_KEY, id); }catch(e){}
+  }
+
+  function songsCollection(){
+    const libId = getLibraryId();
+    return db.collection('libraries').doc(libId).collection('songs');
+  }
+
+  // ---------- respaldo local (localStorage) ----------
+  function getSongsLocal(){
+    try{
+      const raw = localStorage.getItem(LIB_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function setSongsLocal(list){
+    try{ localStorage.setItem(LIB_KEY, JSON.stringify(list)); }catch(e){}
+  }
+
+  function extractTitle(text){
+    const m = text.match(/\{(?:t|title)\s*:\s*(.*?)\}/i);
+    return (m && m[1].trim()) ? m[1].trim() : 'Sin título';
+  }
+
+  // ---------- API unificada: nube si está disponible, si no local ----------
+  async function apiGetSongs(){
+    if(cloudEnabled){
+      setSyncStatus('saving', 'Cargando…');
+      try{
+        const snap = await songsCollection().orderBy('updatedAt','desc').get();
+        const list = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        setSyncStatus('online', 'Sincronizado');
+        return list;
+      }catch(e){
+        console.error(e);
+        setSyncStatus('offline', 'Sin conexión — mostrando copia local');
+        return getSongsLocal();
+      }
+    }
+    setSyncStatus('offline', 'Guardado solo en este dispositivo');
+    return getSongsLocal();
+  }
+
+  async function apiSaveSong(id, title, content){
+    const now = new Date().toISOString();
+    if(cloudEnabled){
+      setSyncStatus('saving', 'Guardando…');
+      try{
+        if(id){
+          await songsCollection().doc(id).set({ title, content, updatedAt: now }, { merge:true });
+          setSyncStatus('online', 'Sincronizado');
+          return id;
+        } else {
+          const ref = await songsCollection().add({ title, content, updatedAt: now });
+          setSyncStatus('online', 'Sincronizado');
+          return ref.id;
+        }
+      }catch(e){
+        console.error(e);
+        setSyncStatus('offline', 'No se pudo guardar en la nube — guardado local');
+      }
+    }
+    // local (siempre se guarda una copia local como respaldo)
+    const songs = getSongsLocal();
+    if(id){
+      const idx = songs.findIndex(s => s.id === id);
+      if(idx >= 0){ songs[idx] = { ...songs[idx], title, content, updatedAt: now }; }
+      else { songs.unshift({ id, title, content, updatedAt: now }); }
+      setSongsLocal(songs);
+      return id;
+    } else {
+      const newId = 'song_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+      songs.unshift({ id:newId, title, content, updatedAt: now });
+      setSongsLocal(songs);
+      return newId;
+    }
+  }
+
+  async function apiDeleteSong(id){
+    if(cloudEnabled){
+      setSyncStatus('saving', 'Eliminando…');
+      try{
+        await songsCollection().doc(id).delete();
+        setSyncStatus('online', 'Sincronizado');
+        return;
+      }catch(e){
+        console.error(e);
+        setSyncStatus('offline', 'No se pudo eliminar en la nube');
+      }
+    }
+    let songs = getSongsLocal();
+    songs = songs.filter(s => s.id !== id);
+    setSongsLocal(songs);
+  }
+
+  async function apiGetSong(id){
+    if(cloudEnabled){
+      try{
+        const doc = await songsCollection().doc(id).get();
+        if(doc.exists) return { id:doc.id, ...doc.data() };
+      }catch(e){ console.error(e); }
+    }
+    const songs = getSongsLocal();
+    return songs.find(s => s.id === id) || null;
+  }
+
+  async function saveCurrentSong(){
+    const title = extractTitle(editor.value);
+    const newId = await apiSaveSong(state.currentId, title, editor.value);
+    state.currentId = newId;
+  }
+
+  async function loadSongById(id){
+    const song = await apiGetSong(id);
+    if(!song) return;
+    editor.value = song.content;
+    state.currentId = song.id;
+    state.filename = slugify(song.title) + '.cho';
+    filenameTag.textContent = state.filename;
+    render();
+    closeLibrary();
+  }
+
+  async function deleteSongById(id){
+    if(!confirm('¿Eliminar esta canción de tu biblioteca? Esta acción no se puede deshacer.')) return;
+    await apiDeleteSong(id);
+    if(state.currentId === id) state.currentId = null;
+    renderLibrary();
+  }
+
+  function formatDate(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString('es', {day:'2-digit', month:'short', year:'numeric'}) + ' · ' +
+           d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  async function renderLibrary(){
+    const body = document.getElementById('libraryBody');
+    body.innerHTML = '<div class="empty-library">Cargando canciones…</div>';
+    const songs = await apiGetSongs();
+    if(!songs.length){
+      body.innerHTML = '<div class="empty-library">Aún no has guardado ninguna canción.<br>Usa «Guardar» para agregar la actual.</div>';
+      return;
+    }
+    body.innerHTML = songs.map(s => `
+      <div class="song-row">
+        <div class="song-row-info">
+          <div class="song-row-title">${escapeHtml(s.title)}</div>
+          <div class="song-row-date">${formatDate(s.updatedAt)}</div>
+        </div>
+        <div class="song-row-actions">
+          <button class="open-btn" data-id="${s.id}">Abrir</button>
+          <button class="delete-btn" data-id="${s.id}">Eliminar</button>
+        </div>
+      </div>
+    `).join('');
+    body.querySelectorAll('.open-btn').forEach(b => b.addEventListener('click', () => loadSongById(b.dataset.id)));
+    body.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', () => deleteSongById(b.dataset.id)));
+  }
+
+  const libraryOverlay = document.getElementById('libraryOverlay');
+  function openLibrary(){ renderLibrary(); libraryOverlay.classList.add('show'); }
+  function closeLibrary(){ libraryOverlay.classList.remove('show'); }
+  document.getElementById('btnLibrary').addEventListener('click', openLibrary);
+  document.getElementById('libraryClose').addEventListener('click', closeLibrary);
+  libraryOverlay.addEventListener('click', (e) => { if(e.target === libraryOverlay) closeLibrary(); });
+
+  document.getElementById('btnSave').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btnSave');
+    const original = btn.innerHTML;
+    await saveCurrentSong();
+    btn.textContent = '✓ Guardado';
+    setTimeout(()=> btn.innerHTML = original, 1300);
+  });
+
+  // ---------- modal de sincronización ----------
+  const syncOverlay = document.getElementById('syncOverlay');
+  const libraryCodeDisplay = document.getElementById('libraryCodeDisplay');
+  const copyCodeBtn = document.getElementById('copyCodeBtn');
+  const linkCodeInput = document.getElementById('linkCodeInput');
+  const linkCodeBtn = document.getElementById('linkCodeBtn');
+  const newCodeBtn = document.getElementById('newCodeBtn');
+  const syncExplain = document.getElementById('syncExplain');
+
+  function openSyncModal(){
+    libraryCodeDisplay.value = getLibraryId();
+    linkCodeInput.value = '';
+    if(!cloudEnabled){
+      syncExplain.innerHTML = '<b>La sincronización en la nube todavía no está configurada</b> (falta agregar las credenciales de Firebase en el código). Por ahora este código solo se usa localmente en este dispositivo.';
+    } else {
+      syncExplain.innerHTML = 'Este código identifica tu biblioteca de canciones en la nube. Ingresa el <b>mismo código</b> en tu computadora y en tu celular para ver las mismas canciones en ambos.';
+    }
+    syncOverlay.classList.add('show');
+  }
+  function closeSyncModal(){ syncOverlay.classList.remove('show'); }
+  document.getElementById('btnSync').addEventListener('click', openSyncModal);
+  document.getElementById('syncClose').addEventListener('click', closeSyncModal);
+  syncOverlay.addEventListener('click', (e) => { if(e.target === syncOverlay) closeSyncModal(); });
+
+  copyCodeBtn.addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText(libraryCodeDisplay.value);
+      copyCodeBtn.textContent = '¡Copiado!';
+      setTimeout(()=> copyCodeBtn.textContent = 'Copiar', 1300);
+    }catch(e){
+      libraryCodeDisplay.select();
+      document.execCommand('copy');
+    }
+  });
+
+  linkCodeBtn.addEventListener('click', ()=>{
+    const code = linkCodeInput.value.trim().toUpperCase();
+    if(!code){ return; }
+    if(!confirm('Este dispositivo pasará a usar la biblioteca del código "' + code + '". ¿Continuar?')) return;
+    setLibraryId(code);
+    closeSyncModal();
+    state.currentId = null;
+  });
+
+  newCodeBtn.addEventListener('click', ()=>{
+    if(!confirm('Se generará un código nuevo y este dispositivo empezará con una biblioteca vacía. ¿Continuar?')) return;
+    const code = genCode();
+    setLibraryId(code);
+    libraryCodeDisplay.value = code;
+    state.currentId = null;
+  });
+
+  // estado inicial del indicador de sincronización
+  if(cloudEnabled){
+    setSyncStatus('online', 'Sincronización activa');
+    syncBanner.style.display = 'none';
+  } else {
+    setSyncStatus('offline', 'Guardado solo en este dispositivo');
+    syncBanner.style.display = 'block';
+  }
+
+  // ---------- file actions ----------
+  function slugify(s){
+    return (s||'cancion').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || 'cancion';
+  }
+
+  document.getElementById('btnNew').addEventListener('click', ()=>{
+    if(editor.value.trim() && !confirm('¿Crear una canción nueva? Se perderá lo que no hayas exportado.')) return;
+    editor.value = DEFAULT_SONG;
+    state.transpose = 0; state.capo = 0;
+    state.currentId = null;
+    document.getElementById('transVal').textContent = '0';
+    document.getElementById('capoVal').textContent = '0';
+    positionCapoBar();
+    state.filename = 'cancion.cho';
+    filenameTag.textContent = state.filename;
+    render();
+  });
+
+  document.getElementById('btnImport').addEventListener('click', ()=> fileInput.click());
+  fileInput.addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      editor.value = reader.result;
+      state.filename = file.name;
+      state.currentId = null;
+      filenameTag.textContent = state.filename;
+      render();
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
+  });
+
+  document.getElementById('btnExport').addEventListener('click', ()=>{
+    const titleMatch = editor.value.match(/\{(?:t|title)\s*:\s*(.*?)\}/i);
+    const name = titleMatch ? slugify(titleMatch[1]) : slugify(state.filename.replace(/\.[^.]+$/,''));
+    const blob = new Blob([editor.value], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name + '.cho';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
+
+  editor.addEventListener('input', render);
+
+  // ---------- mobile tabs ----------
+  const tabEditor = document.getElementById('tabEditor');
+  const tabPreview = document.getElementById('tabPreview');
+  const editorPane = document.querySelector('.editor-pane');
+  const previewPane = document.querySelector('.preview-pane');
+  tabEditor.addEventListener('click', ()=>{
+    editorPane.classList.add('show'); previewPane.classList.remove('show');
+    tabEditor.classList.add('active'); tabPreview.classList.remove('active');
+  });
+  tabPreview.addEventListener('click', ()=>{
+    previewPane.classList.add('show'); editorPane.classList.remove('show');
+    tabPreview.classList.add('active'); tabEditor.classList.remove('active');
+  });
+
+  // ---------- init ----------
+  buildNeck();
+  editor.value = DEFAULT_SONG;
+  render();
+})();
+</script>
+</body>
+</html>
