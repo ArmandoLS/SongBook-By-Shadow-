@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Cancionero — Editor ChordPro</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iIzE4MTgxYiIvPjxwYXRoIGQ9Ik0xNiA0djkuNTVjLS41OS0uMzQtMS4yNy0uNTUtMi0uNTUtMi4yMSAwLTQgMS43OS00IDRzMS43OSA0IDQgNCA0LTEuNzkgNC00VjhoM1Y0aC01eiIgZmlsbD0iIzAwNGM5OSIvPjwvc3ZnPgo=">
+<title>SongBook By Shadow</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iIzE4MTgxYiIvPjxwYXRoIGQ9Ik0xNiA0djkuNTVjLS41OS0uMzQtMS4yNy0uNTUtMi0uNTUtMi4yMSAwLTQgMS43OS00IDRzMS43OSA0IDQgNCA0LTEuNzkgNC00VjhoM1Y0aC01eiIgZmlsbD0iI2I4ODAyZiIvPjwvc3ZnPgo=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
@@ -24,13 +24,13 @@
     --ink:#2B2118;
     --paper-ink-soft:#7a6a52;
     --ink-soft:#adadb8;
-    --gold:#004c99;
-    --gold-soft: rgba(0,76,153,0.24);
+    --gold:#b8802f;
+    --gold-soft: rgba(184,128,47,0.22);
     --rust:#f2545b;
     --cream-text:#efeff1;
-    --border: rgba(0,76,153,0.45);
-    --btn-hover-bg: rgba(0,76,153,0.20);
-    --accent-ink:#ffffff;
+    --border: rgba(184,128,47,0.38);
+    --btn-hover-bg: rgba(184,128,47,0.18);
+    --accent-ink:#241C0F;
     --ok:#6FA46F;
   }
   body[data-theme="light"]{
@@ -65,16 +65,16 @@
   .toolbar{
     background:var(--bg-panel);
     border-right:1px solid var(--border);
-    padding:20px 16px;
+    padding:18px 16px;
     display:flex;
     flex-direction:column;
-    gap:22px;
+    gap:16px;
     overflow-y:auto;
   }
   .brand{
     font-family:'Fraunces',serif;
     font-weight:600;
-    font-size:20px;
+    font-size:16px;
     letter-spacing:0.02em;
     color:var(--gold);
     display:flex;
@@ -199,6 +199,74 @@
     font-size:9.5px;color:var(--ink-soft);
     padding:0 2px;
   }
+  /* ---------- Lista de canciones en la barra lateral ---------- */
+  .tool-group.song-list-group{
+    flex:1;
+    min-height:260px;
+  }
+  .song-list-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .song-list-head .group-label{margin-bottom:0;}
+  .sort-select{
+    background:var(--bg-panel-2);
+    border:1px solid var(--border);
+    color:var(--cream-text);
+    font-size:10.5px;
+    font-weight:600;
+    padding:5px 6px;
+    border-radius:6px;
+    font-family:'Inter',sans-serif;
+    max-width:118px;
+  }
+  .song-list-scroll{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--bg-panel-2);
+  }
+  .song-list-empty{
+    padding:16px 10px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:12px;
+    line-height:1.5;
+  }
+  .song-list-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:9px 10px;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+    transition:background .12s;
+  }
+  .song-list-item:last-child{border-bottom:none;}
+  .song-list-item:hover{background:var(--gold-soft);}
+  .song-list-item.active{
+    background:var(--gold-soft);
+    box-shadow:inset 3px 0 0 var(--gold);
+  }
+  .song-list-item-info{min-width:0;}
+  .song-list-item-title{
+    font-family:'Fraunces',serif;font-weight:600;font-size:13px;color:var(--cream-text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .song-list-item-artist{
+    font-size:10.5px;color:var(--ink-soft);margin-top:1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .song-list-item-delete{
+    flex:none;background:none;border:none;color:var(--ink-soft);
+    font-size:13px;line-height:1;padding:4px 5px;border-radius:4px;
+  }
+  .song-list-item-delete:hover{color:var(--rust);background:rgba(242,84,91,0.12);}
   /* ---------- Sync status pill ---------- */
   .sync-pill{
     display:flex;align-items:center;gap:7px;
@@ -385,6 +453,16 @@
     white-space:nowrap;
   }
   .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .autoscroll-group{
+    display:flex;align-items:center;gap:3px;
+    background:var(--bg-panel-2);border:1px solid var(--border);
+    border-radius:6px;padding:2px;
+  }
+  .autoscroll-group .icon-btn{
+    background:none;border:none;width:23px;height:23px;
+    font-size:14px;font-weight:700;line-height:1;
+  }
+  .autoscroll-group .icon-btn:hover{background:var(--gold-soft);}
   .icon-btn{
     background:var(--bg-panel-2);
     border:1px solid var(--border);
@@ -491,17 +569,25 @@
       align-items:center;
       overflow-x:auto;
       overflow-y:hidden;
-      padding:10px 12px;
-      gap:14px;
+      padding:16px 14px;
+      gap:20px;
+      min-height:68px;
       border-right:none;
       border-bottom:1px solid var(--border);
       -webkit-overflow-scrolling:touch;
     }
     .brand{border:none;padding:0;}
-    .tool-group{flex-direction:row;flex:none;}
+    .tool-group{flex-direction:row;flex:none;align-items:center;}
     .toolbar .group-label{display:none;}
     .neck-wrap{display:none;}
+    .song-list-group{display:none;}
     .sync-banner{display:none;}
+    .toolbar .icon-btn{width:36px;height:36px;}
+    .toolbar .icon-btn svg{width:17px;height:17px;}
+    .toolbar .stepper{padding:6px;}
+    .toolbar .stepper button{width:36px;height:36px;font-size:19px;}
+    .toolbar .stepper .val{font-size:15px;min-width:48px;}
+    .toolbar .toggle-group button{padding:11px 12px;font-size:13.5px;}
     .workspace{grid-template-columns:1fr;grid-auto-rows:1fr;}
     .mobile-tabs{
       display:flex;gap:8px;padding:10px 16px 0;background:var(--bg-stage);
@@ -526,7 +612,7 @@
     .instrument-tabs button{padding:5px 8px;font-size:11px;}
     .chord-card{min-width:64px;padding:8px 9px 7px;}
     .badge{font-size:9.5px;}
-    .brand{font-size:17px;}
+    .brand{font-size:14px;}
     .modal-box{max-width:100%;}
   }
   @supports (padding: max(0px)){
@@ -557,22 +643,25 @@
     <div class="brand">
       <span class="brand-title">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
-        Cancionero
+        SongBook
       </span>
+      <button class="icon-btn" id="btnMenu" title="Menú">☰</button>
       <button class="icon-btn" id="btnTheme" title="Cambiar a modo claro">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" id="themeIcon"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
     </div>
 
-    <div class="tool-group">
-      <div class="group-label">Archivo</div>
-      <button class="btn" id="btnNew">✚ Nuevo</button>
-      <button class="btn" id="btnSave"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 3h12a1 1 0 0 1 1 1v16l-7-4-7 4V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Guardar</button>
-      <button class="btn" id="btnLibrary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 6.5c-1.6-1.3-4.2-2-7-2v13.5c2.8 0 5.4.7 7 2 1.6-1.3 4.2-2 7-2V4.5c-2.8 0-5.4.7-7 2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6.5v13.5" stroke="currentColor" stroke-width="1.6"/></svg> Mis canciones</button>
-      <button class="btn" id="btnImport">⇪ Importar</button>
-      <button class="btn" id="btnExport">⇩ Exportar</button>
-      <button class="btn" id="btnPrint">⎙ Imprimir</button>
-      <input type="file" id="fileInput" accept=".cho,.crd,.chordpro,.chopro,.txt" hidden>
+    <div class="tool-group song-list-group">
+      <div class="song-list-head">
+        <div class="group-label">Tus canciones</div>
+        <select id="songSortSelect" class="sort-select" title="Ordenar por">
+          <option value="title">Título (A-Z)</option>
+          <option value="artist">Artista (A-Z)</option>
+        </select>
+      </div>
+      <div class="song-list-scroll" id="songListScroll">
+        <div class="song-list-empty">Cargando…</div>
+      </div>
     </div>
 
     <div class="tool-group">
@@ -600,14 +689,13 @@
     <div class="tool-group">
       <div class="group-label">Alteraciones</div>
       <div class="toggle-group">
-        <button id="sharpBtn" class="active">♯ Sostenidos</button>
-        <button id="flatBtn">♭ Bemoles</button>
+        <button id="sharpBtn" class="active">♯</button>
+        <button id="flatBtn">♭</button>
       </div>
     </div>
 
     <div class="tool-group" style="margin-top:auto;">
       <div class="group-label">Sincronización</div>
-      <button class="btn" id="btnSync">🔗 Vincular dispositivo</button>
       <div class="sync-pill offline" id="syncPill">
         <span class="sync-dot"></span>
         <span id="syncPillText">Cargando…</span>
@@ -617,6 +705,26 @@
       </div>
     </div>
   </aside>
+
+  <div class="modal-overlay" id="menuOverlay">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2>Menú</h2>
+        <button class="modal-close" id="menuClose">✕</button>
+      </div>
+      <div class="modal-body pad" id="menuBody" style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn" id="btnNew">✚ Nuevo</button>
+        <button class="btn" id="btnSave"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 3h12a1 1 0 0 1 1 1v16l-7-4-7 4V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Guardar</button>
+        <button class="btn" id="btnLibrary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 6.5c-1.6-1.3-4.2-2-7-2v13.5c2.8 0 5.4.7 7 2 1.6-1.3 4.2-2 7-2V4.5c-2.8 0-5.4.7-7 2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6.5v13.5" stroke="currentColor" stroke-width="1.6"/></svg> Mis canciones</button>
+        <button class="btn" id="btnImport">⇪ Importar</button>
+        <button class="btn" id="btnExport">⇩ Exportar</button>
+        <button class="btn" id="btnPrint">⎙ Imprimir</button>
+        <button class="btn" id="btnSync">🔗 Vincular dispositivo</button>
+        <input type="file" id="fileInput" accept=".cho,.crd,.chordpro,.chopro,.txt" hidden>
+      </div>
+    </div>
+  </div>
+
 
   <div class="mobile-tabs">
     <button id="tabEditor" class="active">Editor</button>
@@ -637,6 +745,13 @@
         <span>Vista previa</span>
         <div class="header-right">
           <div class="info-badges" id="infoBadges"></div>
+          <div class="autoscroll-group">
+            <button class="icon-btn" id="btnAutoScrollSlower" title="Más lento">−</button>
+            <button class="icon-btn" id="btnAutoScroll" title="Desplazamiento automático">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" id="autoScrollIcon"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            </button>
+            <button class="icon-btn" id="btnAutoScrollFaster" title="Más rápido">+</button>
+          </div>
           <button class="icon-btn" id="btnFocus" title="Vista dedicada">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -1241,6 +1356,67 @@
     btnFocus.title = on ? 'Salir de la vista dedicada' : 'Vista dedicada';
   });
 
+  // ---------- desplazamiento automático de la letra ----------
+  const btnAutoScroll = document.getElementById('btnAutoScroll');
+  const autoScrollIcon = document.getElementById('autoScrollIcon');
+  const btnAutoScrollSlower = document.getElementById('btnAutoScrollSlower');
+  const btnAutoScrollFaster = document.getElementById('btnAutoScrollFaster');
+  const previewScrollEl = document.querySelector('.preview-scroll');
+  const PLAY_ICON = '<path d="M8 5v14l11-7z" fill="currentColor"/>';
+  const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/>';
+
+  let autoScrollActive = false;
+  let autoScrollSpeed = 3; // escala 1 (muy lento) a 10 (rápido)
+  let autoScrollRAF = null;
+  let autoScrollPosition = 0;
+  let autoScrollLastTs = null;
+  const AUTOSCROLL_PX_PER_SEC_PER_UNIT = 6; // a más alto, más rápido se siente cada nivel
+
+  function autoScrollStep(timestamp){
+    if(!autoScrollActive) return;
+    if(autoScrollLastTs === null) autoScrollLastTs = timestamp;
+    const deltaSeconds = (timestamp - autoScrollLastTs) / 1000;
+    autoScrollLastTs = timestamp;
+    autoScrollPosition += autoScrollSpeed * AUTOSCROLL_PX_PER_SEC_PER_UNIT * deltaSeconds;
+    previewScrollEl.scrollTop = autoScrollPosition;
+    if(previewScrollEl.scrollTop + previewScrollEl.clientHeight >= previewScrollEl.scrollHeight - 1){
+      stopAutoScroll();
+      return;
+    }
+    autoScrollRAF = requestAnimationFrame(autoScrollStep);
+  }
+  function startAutoScroll(){
+    autoScrollActive = true;
+    autoScrollPosition = previewScrollEl.scrollTop;
+    autoScrollLastTs = null;
+    btnAutoScroll.classList.add('active');
+    autoScrollIcon.innerHTML = PAUSE_ICON;
+    btnAutoScroll.title = 'Detener desplazamiento automático';
+    autoScrollRAF = requestAnimationFrame(autoScrollStep);
+  }
+  function stopAutoScroll(){
+    autoScrollActive = false;
+    btnAutoScroll.classList.remove('active');
+    autoScrollIcon.innerHTML = PLAY_ICON;
+    btnAutoScroll.title = 'Desplazamiento automático';
+    if(autoScrollRAF) cancelAnimationFrame(autoScrollRAF);
+  }
+  btnAutoScroll.addEventListener('click', ()=>{
+    if(autoScrollActive) stopAutoScroll(); else startAutoScroll();
+  });
+  btnAutoScrollSlower.addEventListener('click', ()=>{
+    autoScrollSpeed = Math.max(1, autoScrollSpeed - 1);
+  });
+  btnAutoScrollFaster.addEventListener('click', ()=>{
+    autoScrollSpeed = Math.min(10, autoScrollSpeed + 1);
+  });
+  // si el usuario toma control manual del scroll, se detiene el auto-scroll
+  ['wheel','touchstart','mousedown'].forEach(evt => {
+    previewScrollEl.addEventListener(evt, ()=>{
+      if(autoScrollActive) stopAutoScroll();
+    }, { passive:true });
+  });
+
   // =========================================================================
   // SINCRONIZACIÓN EN LA NUBE (Firebase) — con respaldo automático en local
   // =========================================================================
@@ -1347,6 +1523,11 @@
     return (m && m[1].trim()) ? m[1].trim() : 'Sin título';
   }
 
+  function extractSubtitle(text){
+    const m = text.match(/\{(?:st|subtitle)\s*:\s*(.*?)\}/i);
+    return (m && m[1].trim()) ? m[1].trim() : '';
+  }
+
   // ---------- API unificada: nube si está disponible, si no local ----------
   async function apiGetSongs(){
     if(cloudEnabled){
@@ -1366,17 +1547,17 @@
     return getSongsLocal();
   }
 
-  async function apiSaveSong(id, title, content){
+  async function apiSaveSong(id, title, subtitle, content){
     const now = new Date().toISOString();
     if(cloudEnabled){
       setSyncStatus('saving', 'Guardando…');
       try{
         if(id){
-          await songsCollection().doc(id).set({ title, content, updatedAt: now }, { merge:true });
+          await songsCollection().doc(id).set({ title, subtitle, content, updatedAt: now }, { merge:true });
           setSyncStatus('online', 'Sincronizado');
           return id;
         } else {
-          const ref = await songsCollection().add({ title, content, updatedAt: now });
+          const ref = await songsCollection().add({ title, subtitle, content, updatedAt: now });
           setSyncStatus('online', 'Sincronizado');
           return ref.id;
         }
@@ -1389,13 +1570,13 @@
     const songs = getSongsLocal();
     if(id){
       const idx = songs.findIndex(s => s.id === id);
-      if(idx >= 0){ songs[idx] = { ...songs[idx], title, content, updatedAt: now }; }
-      else { songs.unshift({ id, title, content, updatedAt: now }); }
+      if(idx >= 0){ songs[idx] = { ...songs[idx], title, subtitle, content, updatedAt: now }; }
+      else { songs.unshift({ id, title, subtitle, content, updatedAt: now }); }
       setSongsLocal(songs);
       return id;
     } else {
       const newId = 'song_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-      songs.unshift({ id:newId, title, content, updatedAt: now });
+      songs.unshift({ id:newId, title, subtitle, content, updatedAt: now });
       setSongsLocal(songs);
       return newId;
     }
@@ -1431,8 +1612,10 @@
 
   async function saveCurrentSong(){
     const title = extractTitle(editor.value);
-    const newId = await apiSaveSong(state.currentId, title, editor.value);
+    const subtitle = extractSubtitle(editor.value);
+    const newId = await apiSaveSong(state.currentId, title, subtitle, editor.value);
     state.currentId = newId;
+    renderSidebarSongList();
   }
 
   async function loadSongById(id){
@@ -1444,6 +1627,7 @@
     filenameTag.textContent = state.filename;
     render();
     closeLibrary();
+    renderSidebarSongList();
   }
 
   async function deleteSongById(id){
@@ -1451,6 +1635,7 @@
     await apiDeleteSong(id);
     if(state.currentId === id) state.currentId = null;
     renderLibrary();
+    renderSidebarSongList();
   }
 
   function formatDate(iso){
@@ -1483,10 +1668,66 @@
     body.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', () => deleteSongById(b.dataset.id)));
   }
 
+  // ---------- lista de canciones en la barra lateral ----------
+  let sidebarSortMode = 'title'; // 'title' | 'artist'
+  const songListScroll = document.getElementById('songListScroll');
+  const songSortSelect = document.getElementById('songSortSelect');
+
+  async function renderSidebarSongList(){
+    if(!songListScroll) return;
+    songListScroll.innerHTML = '<div class="song-list-empty">Cargando…</div>';
+    const songs = await apiGetSongs();
+    if(!songs.length){
+      songListScroll.innerHTML = '<div class="song-list-empty">Aún no has guardado ninguna canción.<br>Usa «Guardar» en el menú ☰ para agregar la actual.</div>';
+      return;
+    }
+    const sorted = [...songs].sort((a, b) => {
+      const av = (sidebarSortMode === 'artist' ? (a.subtitle || '') : (a.title || '')).toLocaleLowerCase('es');
+      const bv = (sidebarSortMode === 'artist' ? (b.subtitle || '') : (b.title || '')).toLocaleLowerCase('es');
+      return av.localeCompare(bv, 'es');
+    });
+    songListScroll.innerHTML = sorted.map(s => `
+      <div class="song-list-item${s.id === state.currentId ? ' active' : ''}" data-id="${s.id}">
+        <div class="song-list-item-info">
+          <div class="song-list-item-title">${escapeHtml(s.title || 'Sin título')}</div>
+          <div class="song-list-item-artist">${escapeHtml(s.subtitle || 'Artista desconocido')}</div>
+        </div>
+        <button class="song-list-item-delete" data-id="${s.id}" title="Eliminar canción">✕</button>
+      </div>
+    `).join('');
+    songListScroll.querySelectorAll('.song-list-item').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if(e.target.closest('.song-list-item-delete')) return;
+        loadSongById(row.dataset.id);
+      });
+    });
+    songListScroll.querySelectorAll('.song-list-item-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteSongById(btn.dataset.id);
+      });
+    });
+  }
+
+  if(songSortSelect){
+    songSortSelect.addEventListener('change', ()=>{
+      sidebarSortMode = songSortSelect.value === 'artist' ? 'artist' : 'title';
+      renderSidebarSongList();
+    });
+  }
+
+  // ---------- menú hamburguesa (agrupa Archivo + Sincronización) ----------
+  const menuOverlay = document.getElementById('menuOverlay');
+  function openMenu(){ menuOverlay.classList.add('show'); }
+  function closeMenu(){ menuOverlay.classList.remove('show'); }
+  document.getElementById('btnMenu').addEventListener('click', openMenu);
+  document.getElementById('menuClose').addEventListener('click', closeMenu);
+  menuOverlay.addEventListener('click', (e) => { if(e.target === menuOverlay) closeMenu(); });
+
   const libraryOverlay = document.getElementById('libraryOverlay');
   function openLibrary(){ renderLibrary(); libraryOverlay.classList.add('show'); }
   function closeLibrary(){ libraryOverlay.classList.remove('show'); }
-  document.getElementById('btnLibrary').addEventListener('click', openLibrary);
+  document.getElementById('btnLibrary').addEventListener('click', ()=>{ openLibrary(); closeMenu(); });
   document.getElementById('libraryClose').addEventListener('click', closeLibrary);
   libraryOverlay.addEventListener('click', (e) => { if(e.target === libraryOverlay) closeLibrary(); });
 
@@ -1495,7 +1736,7 @@
     const original = btn.innerHTML;
     await saveCurrentSong();
     btn.textContent = '✓ Guardado';
-    setTimeout(()=> btn.innerHTML = original, 1300);
+    setTimeout(()=>{ btn.innerHTML = original; closeMenu(); }, 1300);
   });
 
   // ---------- modal de sincronización ----------
@@ -1518,7 +1759,7 @@
     syncOverlay.classList.add('show');
   }
   function closeSyncModal(){ syncOverlay.classList.remove('show'); }
-  document.getElementById('btnSync').addEventListener('click', openSyncModal);
+  document.getElementById('btnSync').addEventListener('click', ()=>{ openSyncModal(); closeMenu(); });
   document.getElementById('syncClose').addEventListener('click', closeSyncModal);
   syncOverlay.addEventListener('click', (e) => { if(e.target === syncOverlay) closeSyncModal(); });
 
@@ -1540,6 +1781,7 @@
     setLibraryId(code);
     closeSyncModal();
     state.currentId = null;
+    renderSidebarSongList();
   });
 
   newCodeBtn.addEventListener('click', ()=>{
@@ -1548,6 +1790,7 @@
     setLibraryId(code);
     libraryCodeDisplay.value = code;
     state.currentId = null;
+    renderSidebarSongList();
   });
 
   // estado inicial del indicador de sincronización
@@ -1577,9 +1820,11 @@
     state.filename = 'cancion.cho';
     filenameTag.textContent = state.filename;
     render();
+    renderSidebarSongList();
+    closeMenu();
   });
 
-  document.getElementById('btnImport').addEventListener('click', ()=> fileInput.click());
+  document.getElementById('btnImport').addEventListener('click', ()=>{ fileInput.click(); closeMenu(); });
   fileInput.addEventListener('change', (e)=>{
     const file = e.target.files[0];
     if(!file) return;
@@ -1590,6 +1835,7 @@
       state.currentId = null;
       filenameTag.textContent = state.filename;
       render();
+      renderSidebarSongList();
     };
     reader.readAsText(file);
     fileInput.value = '';
@@ -1607,9 +1853,10 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    closeMenu();
   });
 
-  document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
+  document.getElementById('btnPrint').addEventListener('click', ()=>{ closeMenu(); window.print(); });
 
   editor.addEventListener('input', render);
 
@@ -1631,6 +1878,7 @@
   buildNeck();
   editor.value = DEFAULT_SONG;
   render();
+  renderSidebarSongList();
 })();
 </script>
 </body>
